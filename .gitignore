@@ -1,0 +1,8 @@
+.data/
+.local/
+.runtime/
+node_modules/
+dist/
+runtime/
+.env
+*.log
