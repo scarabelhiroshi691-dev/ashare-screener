@@ -15,6 +15,7 @@ import { abortable } from "./history-client.js";
 import { Research } from "./research.js";
 import { Daily } from "./daily.js";
 import { Trend } from "./trend.js";
+import { Dpo } from "./dpo.js";
 import {
   runItems,
   recoverJob,
@@ -37,6 +38,7 @@ export class Store {
   research = new Research(this);
   daily = new Daily(this);
   trend = new Trend(this);
+  dpo = new Dpo(this);
 
   async init() {
     [this.latest, this.eod, this.job] = await Promise.all(
@@ -57,6 +59,7 @@ export class Store {
     await this.research.init();
     await this.daily.init();
     await this.trend.init();
+    await this.dpo.init();
     if (this.job && !["running", "stopping"].includes(this.job.status))
       await this.research.archive(this.job);
     this.monitor = setInterval(
@@ -81,6 +84,7 @@ export class Store {
       this.refreshController?.abort(error);
       this.research.stop();
       this.trend.stop();
+      this.dpo.stop();
       if (this.daily.active) this.daily.stop("resource");
       throw error;
     }
@@ -109,6 +113,7 @@ export class Store {
       researchActive: this.research.active,
       dailyActive: this.daily.active,
       trendActive: this.trend.active,
+      dpoActive: this.dpo.active,
     };
   }
   jobMeta() {
@@ -119,6 +124,7 @@ export class Store {
   running() {
     return (
       this.trend.active ||
+      this.dpo.active ||
       this.starting ||
       this.scanActive ||
       (this.job && ["running", "stopping"].includes(this.job.status))
@@ -133,7 +139,14 @@ export class Store {
     if (this.running()) throw new Error("请先等待或停止当前筛选。");
     if (Date.now() - this.lastRefreshAttempt < 60000)
       throw new Error("全市场行情刷新至少间隔 60 秒，请稍后重试。");
-    await this.checkResources();
+    // Reserve before the first await so a simultaneous DPO/research start sees it.
+    this.refresh.running = true;
+    try {
+      await this.checkResources();
+    } catch (error) {
+      this.refresh.running = false;
+      throw error;
+    }
     this.lastRefreshAttempt = Date.now();
     this.refresh = {
       running: true,

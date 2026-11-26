@@ -7,6 +7,7 @@ import Details from "./Details";
 import ResearchPanel from "./ResearchPanel";
 import DailyPanel from "./DailyPanel";
 import TrendPanel from "./TrendPanel";
+import DpoPanel from "./DpoPanel";
 import { pollingDelay } from "./paged-view";
 import SettingsPanel from "./SettingsPanel";
 import { usePreferences } from "./use-preferences";
@@ -51,6 +52,7 @@ export default function App() {
     triggered = useRef(new Set());
   activeTab.current = tab;
   const busy =
+    state?.dpoActive ||
     state?.trendActive ||
     state?.dailyActive ||
     state?.researchActive ||
@@ -98,6 +100,7 @@ export default function App() {
             s.dailyActive ||
             s.trendActive ||
             s.researchActive ||
+            s.dpoActive ||
             ["running", "stopping"].includes(s.job?.status)),
         );
         if (s && !loaded.current) {
@@ -243,6 +246,7 @@ export default function App() {
             ["watch", "自选股"],
             ["research", "复盘研究"],
             ["trend", "历史趋势"],
+            ["dpo", "DPO策略"],
             ["daily", "模拟跟踪"],
             ["settings", "本机备份"],
           ].map(([key, title]) => (
@@ -268,32 +272,36 @@ export default function App() {
           <h1>
             {tab === "screen"
               ? "盘后选股"
-              : tab === "observe"
-                ? "盘中观察"
-                : tab === "trend"
-                  ? "历史趋势选股"
-                  : tab === "research"
-                    ? "复盘研究"
-                    : tab === "daily"
-                      ? "每日复盘与模拟跟踪"
-                      : tab === "settings"
-                        ? "本机备份与恢复"
-                        : "我的自选"}
+              : tab === "dpo"
+                ? "DPO 独立研究"
+                : tab === "observe"
+                  ? "盘中观察"
+                  : tab === "trend"
+                    ? "历史趋势选股"
+                    : tab === "research"
+                      ? "复盘研究"
+                      : tab === "daily"
+                        ? "每日复盘与模拟跟踪"
+                        : tab === "settings"
+                          ? "本机备份与恢复"
+                          : "我的自选"}
           </h1>
           <p>
             {tab === "screen"
               ? "按规则筛选，每个结果都能解释。"
-              : tab === "observe"
-                ? "观察候选与自选，关注条件变化。"
-                : tab === "trend"
-                  ? "从历史路径寻找持续上行、回撤较小的股票。"
-                  : tab === "research"
-                    ? "从条件到结果，让每次筛选留下证据。"
-                    : tab === "daily"
-                      ? "固定条件，登记信号，用后续新数据验证。"
-                      : tab === "settings"
-                        ? "管理此浏览器的自选股和命名策略。"
-                        : "把值得继续研究的股票留在这里。"}
+              : tab === "dpo"
+                ? "观察金叉与回踩，先用历史样本验证。"
+                : tab === "observe"
+                  ? "观察候选与自选，关注条件变化。"
+                  : tab === "trend"
+                    ? "从历史路径寻找持续上行、回撤较小的股票。"
+                    : tab === "research"
+                      ? "从条件到结果，让每次筛选留下证据。"
+                      : tab === "daily"
+                        ? "固定条件，登记信号，用后续新数据验证。"
+                        : tab === "settings"
+                          ? "管理此浏览器的自选股和命名策略。"
+                          : "把值得继续研究的股票留在这里。"}
           </p>
         </div>
         <div className="actions">
@@ -310,7 +318,7 @@ export default function App() {
                 开始筛选
               </button>
             </>
-          ) : ["research", "daily", "trend", "settings"].includes(
+          ) : ["research", "daily", "trend", "dpo", "settings"].includes(
               tab,
             ) ? null : (
             <button
@@ -404,6 +412,12 @@ export default function App() {
       )}
       {tab === "settings" ? (
         <SettingsPanel preferences={preferences} />
+      ) : tab === "dpo" ? (
+        <DpoPanel
+          busy={busy}
+          market={state?.market}
+          onRefresh={() => action("market/refresh")}
+        />
       ) : tab === "research" ? (
         <ResearchPanel busy={busy} />
       ) : tab === "daily" ? (

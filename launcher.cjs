@@ -109,6 +109,7 @@ async function run() {
         daily.calendar?.active ||
         state.trendActive ||
         state.researchActive ||
+        state.dpoActive ||
         state.refresh?.running ||
         ["running", "stopping"].includes(state.job?.status)
       )

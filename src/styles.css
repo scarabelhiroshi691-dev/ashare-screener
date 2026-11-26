@@ -1170,3 +1170,67 @@ nav {
   .table-scroll { width: 100%; }
   .notice, .hint { overflow-wrap: anywhere; }
 }
+.dpo-chart { margin: 24px 0 0; }
+.dpo-chart svg { width: 100%; display: block; color: #192b42; }
+.dpo-chart text { fill: currentColor; }
+.dpo-panel .research-controls details { margin-bottom: 16px; }
+.dpo-panel .research-controls details .field { margin-top: 12px; }
+.dpo-panel td { white-space: nowrap; }
+.dpo-panel .segmented { flex-wrap: wrap; gap: 4px; }
+.dpo-panel .segmented button { width: auto; flex: 1 1 140px; }
+.dpo-panel .methodology { border-left: 1px solid #dce2ea; }
+.dpo-panel .hint { color: #596c84; }
+.dpo-panel .research-results { min-width: 0; }
+
+.chart-options {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 16px;
+  color: #386771;
+}
+.chart-options button {
+  min-height: 44px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+.chart-options button[aria-pressed="true"] {
+  border-color: #386771;
+  background: #eaf3f3;
+  color: #244e55;
+}
+.chart-options button:focus-visible,
+.chart-observation summary:focus-visible {
+  outline: 2px solid #2160e6;
+  outline-offset: 2px;
+}
+.chart-observation {
+  padding: 12px 0 0;
+  border-top: 1px solid #dce2ea;
+}
+.chart-observation h4 {
+  margin: 0;
+  font-size: 14px;
+}
+.chart-observation .hint {
+  color: #526479;
+}
+.chart-observation dd {
+  font-variant-numeric: tabular-nums;
+}
+.chart-observation dt {
+  color: #526479;
+}
+.chart-observation summary {
+  min-height: 44px;
+  padding: 12px 0;
+  color: #385776;
+  cursor: pointer;
+  font-size: 13px;
+}
+.chart-observation-match {
+  color: #1b634f;
+  font-size: 13px;
+  font-weight: 600;
+}

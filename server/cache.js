@@ -38,7 +38,7 @@ export async function resourceCheck() {
 
 function cachePath(key) {
   if (
-    !/^(market|eod|last-scan|last-trend|research|last-research|daily|daily-schedule|trading-calendar|history\/[a-z0-9-]+)$/.test(
+    !/^(market|eod|last-scan|last-trend|last-dpo|research|last-research|daily|daily-schedule|trading-calendar|history\/[a-z0-9-]+)$/.test(
       key,
     )
   )

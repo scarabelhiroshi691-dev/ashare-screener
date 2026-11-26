@@ -89,6 +89,34 @@ const server = http.createServer(async (req, res) => {
         }
         return send(res, 200, state);
       }
+      if (req.method === "GET" && url.pathname === "/api/dpo")
+        return send(res, 200, store.dpo.state());
+      if (req.method === "GET" && url.pathname === "/api/dpo/rows")
+        return send(res, 200, store.dpo.rows(url.searchParams));
+      if (req.method === "GET" && url.pathname === "/api/dpo/detail")
+        return send(res, 200, store.dpo.detail(url.searchParams.get("symbol")));
+      if (req.method === "GET" && url.pathname === "/api/dpo/export") {
+        res.writeHead(200, {
+          "Content-Type": "application/json; charset=utf-8",
+          "Content-Disposition": 'attachment; filename="dpo-research.json"',
+          "Cache-Control": "no-store",
+        });
+        return res.end(JSON.stringify(store.dpo.export()));
+      }
+      if (req.method === "POST" && url.pathname === "/api/dpo/start")
+        return send(res, 202, await store.dpo.start(await body(req)));
+      if (
+        req.method === "POST" &&
+        /^\/api\/dpo\/(resume|retry|stop)$/.test(url.pathname)
+      ) {
+        await body(req);
+        const operation = url.pathname.split("/").at(-1);
+        if (operation === "stop") {
+          store.dpo.stop();
+          return send(res, 202, store.dpo.state());
+        }
+        return send(res, 202, await store.dpo.continue(operation));
+      }
       const view =
         /^\/api\/view\/(trend|daily|reports|archive)\/(status|rows|export)$/.exec(
           url.pathname,
@@ -383,6 +411,7 @@ function shutdown() {
   store.daily.stop("shutdown");
   store.research.stop();
   store.trend.stop();
+  store.dpo.stop();
   closeBaoStock();
   store.stopScan();
   store.stopRefresh();

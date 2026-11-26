@@ -1,24 +1,26 @@
 import React from "react";
 import { fmt } from "./api";
-export default function Chart({ bars = [], trend = false }) {
+export default function Chart({ bars = [], trend = false, bands = [] }) {
   if (!bars.length) return <div className="empty">暂无完成日线</div>;
   const w = 400,
     h = 250,
     p = 20,
     lo = Math.min(
-      ...bars.map((b) =>
+      ...bars.map((b, i) =>
         Math.min(
           b.low,
           b.ma20 ?? b.low,
+          bands[i]?.lower ?? b.low,
           ...(trend ? [b.ma60 ?? b.low, b.ma120 ?? b.low] : []),
         ),
       ),
     ),
     hi = Math.max(
-      ...bars.map((b) =>
+      ...bars.map((b, i) =>
         Math.max(
           b.high,
           b.ma20 ?? b.high,
+          bands[i]?.upper ?? b.high,
           ...(trend ? [b.ma60 ?? b.high, b.ma120 ?? b.high] : []),
         ),
       ),
@@ -33,9 +35,10 @@ export default function Chart({ bars = [], trend = false }) {
       viewBox={`0 0 ${w} ${h + 30}`}
       role="img"
       aria-label={
-        trend
+        (trend
           ? "前复权日K线与MA20、MA60、MA120，红涨绿跌"
-          : "前复权日 K 线，红涨绿跌，蓝色 MA5，橙色 MA20"
+          : "前复权日 K 线，红涨绿跌，蓝色 MA5，橙色 MA20") +
+        (bands.length ? "，虚线为布林带上下轨" : "")
       }
     >
       {[0, 0.5, 1].map((t) => (
@@ -52,6 +55,20 @@ export default function Chart({ bars = [], trend = false }) {
           </text>
         </g>
       ))}
+      {bands.length > 0 &&
+        ["upper", "lower"].map((key) => (
+          <polyline
+            key={key}
+            data-band={key}
+            fill="none"
+            stroke="#386771"
+            strokeWidth="1.5"
+            strokeDasharray="4 3"
+            points={bands
+              .flatMap((band, i) => (band ? [`${x(i)},${y(band[key])}`] : []))
+              .join(" ")}
+          />
+        ))}
       {bars.map((b, i) => (
         <g
           key={b.date}

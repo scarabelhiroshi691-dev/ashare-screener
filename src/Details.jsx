@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Chart from "./Chart";
+import ChartObservation from "./ChartObservation";
+import { bollingerBands, observeDailyChart } from "./chart-observation";
 import { api, fmt, pct, time } from "./api";
 export default function Details({
   stock,
@@ -11,6 +13,18 @@ export default function Details({
   const [history, setHistory] = useState(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const [showBands, setShowBands] = useState(false);
+  const historyKey = [
+    historyPath,
+    stock?.symbol,
+    asOf,
+    stock?.historySource,
+    stock?.historyFetchedAt,
+  ].join("/");
+  const current = history?.key === historyKey ? history.data : null;
+  const bars = current?.bars ?? [];
+  const bands = showBands ? bollingerBands(bars) : [];
+  const observation = current ? observeDailyChart(bars, asOf) : null;
   useEffect(() => {
     let alive = true;
     const controller = new AbortController();
@@ -23,7 +37,7 @@ export default function Details({
       signal: controller.signal,
     })
       .then((h) => {
-        if (alive) setHistory(h);
+        if (alive) setHistory({ key: historyKey, data: h });
       })
       .catch((e) => {
         if (alive) setError(e.message);
@@ -41,6 +55,7 @@ export default function Details({
     stock?.historyFetchedAt,
     asOf,
     historyPath,
+    historyKey,
   ]);
   if (!stock)
     return (
@@ -113,7 +128,24 @@ export default function Details({
         ) : error ? (
           <p className="notice error">{error}</p>
         ) : (
-          <Chart bars={history?.bars} trend={stock.trend} />
+          <>
+            <Chart bars={bars} trend={stock.trend} bands={bands} />
+            {bars.length >= 20 && (
+              <div className="chart-options">
+                <button
+                  type="button"
+                  aria-pressed={showBands}
+                  onClick={() => setShowBands((value) => !value)}
+                >
+                  布林带 BOLL（20, 2）
+                </button>
+                {showBands && <small>虚线为上下轨，MA20 为中轨</small>}
+              </div>
+            )}
+            {current && (
+              <ChartObservation observation={observation} asOf={asOf} />
+            )}
+          </>
         )}
         <p className="hint">价格为原始报价，日 K 为前复权。成交量单位：股。</p>
       </div>
@@ -148,18 +180,18 @@ export default function Details({
           <dt>来源时间</dt>
           <dd>{time(stock.quoteAt)}</dd>
           <dt>完成日线截至</dt>
-          <dd>{history?.latestBarDate || "—"}</dd>
+          <dd>{current?.latestBarDate || "—"}</dd>
           <dt>日线来源</dt>
           <dd>
-            {history?.source || "—"}
-            {history?.fromCache ? " · 缓存" : ""}
+            {current?.source || "—"}
+            {current?.fromCache ? " · 缓存" : ""}
           </dd>
           <dt>换手率</dt>
           <dd>{fmt(stock.turnover)}%</dd>
         </dl>
-        {history?.latestBarDate && history.latestBarDate !== asOf && (
+        {current?.latestBarDate && current.latestBarDate !== asOf && (
           <p className="notice">
-            缺少目标交易日日线，图表截至 {history.latestBarDate}。
+            缺少目标交易日日线，图表截至 {current.latestBarDate}。
           </p>
         )}
       </div>
